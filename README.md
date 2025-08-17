@@ -78,14 +78,16 @@ pyinstaller --onefile --add-data "settings.ini;." --name "GMB_Scraper" main.py
 This is normal - the .exe includes Python runtime and all dependencies.
 
 ## File Structure
-├── main.py # Main application entry point
-├── Google.py # Core scraping functionality
-├── counties_data.py # County data for all states
-├── credit_tracker.py # Credit management system
-├── Utils.py # Utility functions
-├── requirements.txt # Python dependencies
-├── settings.ini # Configuration file
-└── Output/ # Generated Excel files
+
+├── main.py              # 🚀 Main application entry point
+├── Google.py            # 🌐 Core scraping functionality
+├── counties_data.py     # 🗺️ County data for all states
+├── credit_tracker.py    # 💳 Credit management system
+├── Utils.py             # �� Utility functions
+├── requirements.txt     # 📦 Python dependencies
+├── settings.ini         # ⚙️ Configuration file
+├── build.bat            # 🎯 One-click build script (Windows)
+└── Output/              # 📊 Generated Excel files
 
 ## Requirements
 
