@@ -1,5 +1,4 @@
 requests
 pandas
 scrapy
-scrapy-selector
 configparser
