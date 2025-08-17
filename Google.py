@@ -29,7 +29,7 @@ class Scraper:
             os.mkdir("Output")
         df = pd.DataFrame(self.cmp)
         df.to_excel(f"Output/{self.filenm}.xlsx", index=False)
-        print(f"📁 Data saved to: Output/{self.filenm}.xlsx")
+        print(f"[SAVE] Data saved to: Output/{self.filenm}.xlsx")
 
     def get_data_only(self):
         """Return data without saving to file - for state-level collection"""
@@ -37,8 +37,8 @@ class Scraper:
 
     def start(self):
         """Original start method - saves individual city files"""
-        print(f"🔍 Search Term --------> {self.search_terms}")
-        print(f"📍 Location Coordinates -> Lat: {self.latitude}, Lng: {self.longitude}")
+        print(f"[SEARCH] Search Term --------> {self.search_terms}")
+        print(f"[LOCATION] Location Coordinates -> Lat: {self.latitude}, Lng: {self.longitude}")
         
         start_time = time.time()
         page_start_time = start_time
@@ -50,14 +50,14 @@ class Scraper:
         pg = 1
         while True:
             page_start_time = time.time()
-            print(f"\n📄 Scraping Page # {pg} at {datetime.datetime.now().strftime('%H:%M:%S')}")
+            print(f"\n[PAGE] Scraping Page # {pg} at {datetime.datetime.now().strftime('%H:%M:%S')}")
             
             try:
                 links = self.get_listings(self.search_terms, response)
-                print(f"✅ Found {len(links)} business links on page {pg}")
+                print(f"[SUCCESS] Found {len(links)} business links on page {pg}")
                 
                 if not links:
-                    print("⚠️  No links found - page might be empty or blocked")
+                    print("[WARNING] No links found - page might be empty or blocked")
                     break
                 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -65,35 +65,35 @@ class Scraper:
                 
                 # Save individual city file (original behavior)
                 self.save_data()
-                print(f"✅ Data saved - Total businesses so far: {len(self.cmp)}")
+                print(f"[SUCCESS] Data saved - Total businesses so far: {len(self.cmp)}")
                 
                 pg += 1
                 nxt_page = response.xpath("//a[contains(@id, 'pnnext')]/@href").get()
                 
                 if nxt_page:
-                    print(f"⏭️  Moving to next page...")
+                    print(f"[NEXT] Moving to next page...")
                     response = self.get_response("https://www.google.com"+nxt_page)
                     
                     # Add delay between pages
                     delay = 2
-                    print(f"⏳ Waiting {delay} seconds before next page...")
+                    print(f"[WAIT] Waiting {delay} seconds before next page...")
                     time.sleep(delay)
                 else:
-                    print("🏁 No more pages found - search complete")
+                    print("[COMPLETE] No more pages found - search complete")
                     break
                     
             except Exception as e:
-                print(f"❌ Error on page {pg}: {e}")
-                print(f"⏰ Error time: {datetime.datetime.now().strftime('%H:%M:%S')}")
+                print(f"[ERROR] Error on page {pg}: {e}")
+                print(f"[TIME] Error time: {datetime.datetime.now().strftime('%H:%M:%S')}")
                 break
         
         total_time = time.time() - start_time
-        print(f"\n🎯 COMPLETED: {len(self.cmp)} businesses in {total_time:.1f} seconds")
+        print(f"\n[FINISH] COMPLETED: {len(self.cmp)} businesses in {total_time:.1f} seconds")
 
     def start_and_return_data(self):
         """NEW METHOD: Start scraping and return data without saving files"""
-        print(f"🔍 Search Term --------> {self.search_terms}")
-        print(f"📍 Location Coordinates -> Lat: {self.latitude}, Lng: {self.longitude}")
+        print(f"[SEARCH] Search Term --------> {self.search_terms}")
+        print(f"[LOCATION] Location Coordinates -> Lat: {self.latitude}, Lng: {self.longitude}")
         
         start_time = time.time()
         page_start_time = start_time
@@ -105,43 +105,43 @@ class Scraper:
         pg = 1
         while True:
             page_start_time = time.time()
-            print(f"\n📄 Scraping Page # {pg} at {datetime.datetime.now().strftime('%H:%M:%S')}")
+            print(f"\n[PAGE] Scraping Page # {pg} at {datetime.datetime.now().strftime('%H:%M:%S')}")
             
             try:
                 links = self.get_listings(self.search_terms, response)
-                print(f"✅ Found {len(links)} business links on page {pg}")
+                print(f"[SUCCESS] Found {len(links)} business links on page {pg}")
                 
                 if not links:
-                    print("⚠️  No links found - page might be empty or blocked")
+                    print("[WARNING] No links found - page might be empty or blocked")
                     break
                 
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     executor.map(self.get_data, links)
                 
-                print(f"✅ Data collected - Total businesses so far: {len(self.cmp)}")
+                print(f"[SUCCESS] Data collected - Total businesses so far: {len(self.cmp)}")
                 
                 pg += 1
                 nxt_page = response.xpath("//a[contains(@id, 'pnnext')]/@href").get()
                 
                 if nxt_page:
-                    print(f"⏭️  Moving to next page...")
+                    print(f"[NEXT] Moving to next page...")
                     response = self.get_response("https://www.google.com"+nxt_page)
                     
                     # Add delay between pages
                     delay = 2
-                    print(f"⏳ Waiting {delay} seconds before next page...")
+                    print(f"[WAIT] Waiting {delay} seconds before next page...")
                     time.sleep(delay)
                 else:
-                    print("🏁 No more pages found - search complete")
+                    print("[COMPLETE] No more pages found - search complete")
                     break
                     
             except Exception as e:
-                print(f"❌ Error on page {pg}: {e}")
-                print(f"⏰ Error time: {datetime.datetime.now().strftime('%H:%M:%S')}")
+                print(f"[ERROR] Error on page {pg}: {e}")
+                print(f"[TIME] Error time: {datetime.datetime.now().strftime('%H:%M:%S')}")
                 break
         
         total_time = time.time() - start_time
-        print(f"\n🎯 COMPLETED: {len(self.cmp)} businesses in {total_time:.1f} seconds")
+        print(f"\n[FINISH] COMPLETED: {len(self.cmp)} businesses in {total_time:.1f} seconds")
         
         # Return the collected data instead of saving
         return self.get_data_only()
@@ -164,7 +164,7 @@ class Scraper:
         return f"{base_url}?{query_string}"
 
     def get_response(self, URL: str):
-        print(f"🌐 Requesting: {URL[:100]}...")
+        print(f"[REQUEST] Requesting: {URL[:100]}...")
         request_start = time.time()
         
         if proxy == 1:
@@ -172,18 +172,18 @@ class Scraper:
             while True:
                 attempts += 1
                 try:
-                    print(f"🔄 Proxy attempt {attempts}")
+                    print(f"[PROXY] Proxy attempt {attempts}")
                     r = requests.get(URL, headers=headers, proxies=proxyDict, timeout=30)
                     if r.status_code == 200:
                         request_time = time.time() - request_start
-                        print(f"✅ Success in {request_time:.1f}s (attempt {attempts})")
+                        print(f"[SUCCESS] Success in {request_time:.1f}s (attempt {attempts})")
                         break
                     else:
-                        print(f"⚠️  Status {r.status_code} (attempt {attempts})")
+                        print(f"[WARNING] Status {r.status_code} (attempt {attempts})")
                 except Exception as e:
-                    print(f"❌ Error: {e} (attempt {attempts})")
+                    print(f"[ERROR] Error: {e} (attempt {attempts})")
                     if attempts > 10:
-                        print("⚠️  Too many attempts, trying direct connection")
+                        print("[WARNING] Too many attempts, trying direct connection")
                         r = requests.get(URL, headers=headers, timeout=30)
                         break
                     continue
