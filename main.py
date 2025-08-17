@@ -177,179 +177,132 @@ def get_county_selection(counties):
             print("❌ Invalid input. Please try again.")
 
 def main():
-    """Main function to run the scraper"""
-    try:
-        print_welcome_banner()
-        
-        # Initialize credit tracker with PacketStream credentials
-        api_key = "AIzaSyDD8LALkNo36hN295bcI3Wim-LUvlm5G3s"  # From Utils.py
-        credit_tracker = CreditTracker(
-            api_key=api_key,
-            proxy_user=proxy_user,  # PacketStream username
-            proxy_pass=proxy_pass   # PacketStream password
-        )
-        
-        # Step 1: Get search query first
-        print("🔍 ENTER YOUR SEARCH QUERY:")
-        print("   Examples: 'mobile home parks', 'property management', 'real estate'")
-        print("-" * 60)
-        base_search = input("Query: ").strip()
-        
-        # Step 2: Ask which state
-        selected_state = get_state_input()
-        print(f"\n✅ Selected state: {selected_state}")
-        
-        # Step 3: Fetch counties from counties_data.py
-        counties = get_counties_from_data(selected_state)
-        if not counties:
-            print(f"❌ No counties found for {selected_state}")
-            return
-        
-        # Step 4: Show counties and their coordinates
-        display_counties(counties, selected_state)
-        
-        # Step 5: Ask which counties user wants
-        selected_counties = get_county_selection(counties)
-        print(f"\n✅ Selected counties: {len(selected_counties)} counties")
-        
-        # Step 6: Ask for output file name
-        print("\n" + "="*50)
-        print(" OUTPUT FILE CONFIGURATION")
-        print("="*50)
-        
-        print("Enter output file name (will append state):")
-        filenm_base = input().strip()
-        
-        # Confirm before starting
-        print(f"\n📋 SUMMARY:")
-        print(f"Search Query: {base_search}")
-        print(f"State: {selected_state}")
-        print(f"Counties: {len(selected_counties)} counties selected")
-        print(f"Output File: {filenm_base} - {selected_state}.xlsx")
-        
-        confirm = input("\n Start scraping? (y/n): ").strip().lower()
-        if confirm not in ['y', 'yes']:
-            print("❌ Scraping cancelled.")
-            return
-        
-        # Start scraping
-        start_time = time.time()
-        print(f"\n⏰ Start time: {time.strftime('%H:%M:%S')}")
-        
-        all_state_data = [] # Collect data from all counties
-        for i, county in enumerate(selected_counties, 1):
-            county_full = f"{county['name']}, {selected_state}"
-            search_term = f"{base_search} in {county_full}"
-            
-            print(f"\n🚀 County {i}/{len(selected_counties)}: {county_full}")
-            print(f" Coords: {county['lat']:.4f}, {county['lon']:.4f}")
-            print(f"🔍 Search term: {search_term}")
-            
-            try:
-                # Create scraper for each county
-                out_name = f"{filenm_base} - {county['name']}_{selected_state}"
-                s = Scraper(search_term, "", county['lat'], county['lon'])
-                county_data = s.start_and_return_data()
-
-                # Track credits used for this query/county
-                # Each business address lookup uses 1 geocoding API call
-                businesses_found = len(county_data)
-                
-                # Track credits for EACH business found (not just once per county)
-                for _ in range(businesses_found):
-                    credit_tracker.track_query(
-                        query=base_search,
-                        state=selected_state,
-                        county=county['name'],
-                        results_count=1  # Each business = 1 API call
-                    )
-                
-                print(f"✅ Completed {county['name']} - {businesses_found} businesses found")
-                print(f"💰 Credits used for this county: ${businesses_found * 0.005:.3f}")
-
-                # Add county information to each business record
-                for business in county_data:
-                    business['County'] = county['name']
-                    business['State'] = selected_state
-                    all_state_data.append(business)
-                
-            except Exception as e:
-                print(f"❌ Error scraping {county['name']}: {e}")
-                continue
-        
-        total_time = time.time() - start_time
-        print(f"\n✅ All counties completed in {total_time:.1f} seconds")
-        
-        # Save all collected data to a single state file
-        if all_state_data:
-            try:
-                df = pd.DataFrame(all_state_data)
-                df.to_excel(f"{filenm_base} - {selected_state}.xlsx", index=False)
-                print(f"\n✅ All data saved to {filenm_base} - {selected_state}.xlsx")
-            except Exception as e:
-                print(f"❌ Error saving state-level file: {e}")
-        else:
-            print("❌ No data collected to save.")
-        
-        # Generate final credit report
-        print("\n" + "="*60)
-        print("💰 GENERATING CREDIT USAGE REPORT")
-        print("="*60)
-        
-        credit_tracker.get_final_report()
-
-    except Exception as e:
-        print(f"❌ An error occurred: {e}")
-        print("Please check your internet connection and try again.")
-
-def ask_to_continue():
-    """Ask user if they want to scrape again"""
-    while True:
-        print("\n" + "="*80)
-        print("🔄 SCRAPING COMPLETED!")
-        print("="*80)
-        
-        choice = input("\nDo you want to scrape another state? (y/n): ").strip().lower()
-        
-        if choice in ['y', 'yes', '1']:
-            print("\n🔄 Starting new scraping session...\n")
-            return True
-        elif choice in ['n', 'no', '0']:
-            print("\n👋 Thank you for using GMB Scraper!")
-            print("Press Enter to exit...")
-            input()
-            return False
-        else:
-            print("❌ Please enter 'y' for yes or 'n' for no.")
-
-if __name__ == "__main__":
-    while True:
-        try:
-            # Your existing main code here
-            print_welcome_banner()
-            # ... rest of your scraping logic ...
-            
-            # Ask to continue
-            print("\n" + "="*60)
-            choice = input("Do you want to scrape another state? (y/n): ").strip().lower()
-            
-            if choice not in ['y', 'yes', '1']:
-                print("\n👋 Thank you for using GMB Scraper!")
-                print("Press Enter to exit...")
-                input()
-                break
-                
-            print("\n🔄 Starting new session...\n")
-            
-        except KeyboardInterrupt:
-            print("\n\n⚠️  Scraping interrupted.")
-            print("Press Enter to exit...")
-            input()
-            break
-        except Exception as e:
-            print(f"\n❌ Error: {e}")
-            print("Press Enter to exit...")
-            input()
-            break
+    # Print stylish welcome banner
+    print_welcome_banner()
     
-    print("👋 Goodbye!")
+    # Initialize credit tracker with PacketStream credentials
+    api_key = "AIzaSyDD8LALkNo36hN295bcI3Wim-LUvlm5G3s"  # From Utils.py
+    credit_tracker = CreditTracker(
+        api_key=api_key,
+        proxy_user=proxy_user,  # PacketStream username
+        proxy_pass=proxy_pass   # PacketStream password
+    )
+    
+    # Step 1: Get search query first
+    print("🔍 ENTER YOUR SEARCH QUERY:")
+    print("   Examples: 'mobile home parks', 'property management', 'real estate'")
+    print("-" * 60)
+    base_search = input("Query: ").strip()
+    
+    # Step 2: Ask which state
+    selected_state = get_state_input()
+    print(f"\n✅ Selected state: {selected_state}")
+    
+    # Step 3: Fetch counties from counties_data.py
+    counties = get_counties_from_data(selected_state)
+    if not counties:
+        print(f"❌ No counties found for {selected_state}")
+        return
+    
+    # Step 4: Show counties and their coordinates
+    display_counties(counties, selected_state)
+    
+    # Step 5: Ask which counties user wants
+    selected_counties = get_county_selection(counties)
+    print(f"\n✅ Selected counties: {len(selected_counties)} counties")
+    
+    # Step 6: Ask for output file name
+    print("\n" + "="*50)
+    print(" OUTPUT FILE CONFIGURATION")
+    print("="*50)
+    
+    print("Enter output file name (will append state):")
+    filenm_base = input().strip()
+    
+    # Confirm before starting
+    print(f"\n📋 SUMMARY:")
+    print(f"Search Query: {base_search}")
+    print(f"State: {selected_state}")
+    print(f"Counties: {len(selected_counties)} counties selected")
+    print(f"Output File: {filenm_base} - {selected_state}.xlsx")
+    
+    confirm = input("\n Start scraping? (y/n): ").strip().lower()
+    if confirm not in ['y', 'yes']:
+        print("❌ Scraping cancelled.")
+        return
+    
+    # Start scraping
+    start_time = time.time()
+    print(f"\n⏰ Start time: {time.strftime('%H:%M:%S')}")
+    
+    all_state_data = [] # Collect data from all counties
+    for i, county in enumerate(selected_counties, 1):
+        county_full = f"{county['name']}, {selected_state}"
+        search_term = f"{base_search} in {county_full}"
+        
+        print(f"\n🚀 County {i}/{len(selected_counties)}: {county_full}")
+        print(f" Coords: {county['lat']:.4f}, {county['lon']:.4f}")
+        print(f"🔍 Search term: {search_term}")
+        
+        try:
+            # Create scraper for each county
+            out_name = f"{filenm_base} - {county['name']}_{selected_state}"
+            s = Scraper(search_term, "", county['lat'], county['lon'])
+            county_data = s.start_and_return_data()
+
+            # Track credits used for this query/county
+            # Each business address lookup uses 1 geocoding API call
+            businesses_found = len(county_data)
+            
+            # Track credits for EACH business found (not just once per county)
+            for _ in range(businesses_found):
+                credit_tracker.track_query(
+                    query=base_search,
+                    state=selected_state,
+                    county=county['name'],
+                    results_count=1  # Each business = 1 API call
+                )
+            
+            print(f"✅ Completed {county['name']} - {businesses_found} businesses found")
+            print(f"💰 Credits used for this county: ${businesses_found * 0.005:.3f}")
+
+            # Add county information to each business record
+            for business in county_data:
+                business['County'] = county['name']
+                business['State'] = selected_state
+                all_state_data.append(business)
+            
+        except Exception as e:
+            print(f"❌ Error scraping {county['name']}: {e}")
+            continue
+    
+    total_time = time.time() - start_time
+    print(f"\n✅ All counties completed in {total_time:.1f} seconds")
+    
+    # Save all collected data to a single state file
+    if all_state_data:
+        try:
+            df = pd.DataFrame(all_state_data)
+            df.to_excel(f"{filenm_base} - {selected_state}.xlsx", index=False)
+            print(f"\n✅ All data saved to {filenm_base} - {selected_state}.xlsx")
+        except Exception as e:
+            print(f"❌ Error saving state-level file: {e}")
+    else:
+        print("❌ No data collected to save.")
+    
+    # Generate final credit report
+    print("\n" + "="*60)
+    print("💰 GENERATING CREDIT USAGE REPORT")
+    print("="*60)
+    
+    credit_tracker.get_final_report()
+
+if __name__ == '__main__':
+    main()
+    
+    # Keep the window open after completion
+    print("\n" + "="*60)
+    print(" SCRAPING COMPLETED!")
+    print("="*60)
+    print("Press Enter to close the program...")
+    input()
