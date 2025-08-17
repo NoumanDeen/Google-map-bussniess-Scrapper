@@ -80,8 +80,6 @@ This is normal - the .exe includes Python runtime and all dependencies.
 ## File Structure
 
 ```
-## 📁 File Structure
-
     ├── main.py              # 🚀 Main application entry point
     ├── Google.py            # 🌐 Core scraping functionality
     ├── counties_data.py     # 🗺️ County data for all states
