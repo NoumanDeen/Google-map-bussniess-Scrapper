@@ -23,28 +23,28 @@ from Utils import proxy_user, proxy_pass  # Import proxy credentials
 def print_welcome_banner():
     """Print a stylish welcome banner"""
     print("\n" + "="*100)
-    print("🎯" + " "*30 + "GOOGLE MAPS BUSINESS SCRAPER" + " "*36 + "🎯")
+    print("*" + " "*30 + "GOOGLE MAPS BUSINESS SCRAPER" + " "*36 + "*")
     print("="*100)
-    print("🌟" + " "*30 + "PROFESSIONAL GMB PROFILE EXTRACTOR" + " "*30 + "🌟")
+    print(">" + " "*30 + "PROFESSIONAL GMB PROFILE EXTRACTOR" + " "*30 + "<")
     print("="*100)
-    print("🚀 Powered by Hastylead")
+    print("Powered by Hastylead")
     print("="*100 + "\n")
 
 def get_counties_from_data(state_code):
     """Get counties from counties_data.py file"""
     try:
-        print(f"🌐 Getting counties from counties_data.py for {state_code}...")
+        print(f"[INFO] Getting counties from counties_data.py for {state_code}...")
         
         if state_code in counties_data:
             counties = counties_data[state_code]
-            print(f"✅ Found {len(counties)} counties for {state_code}")
+            print(f"[SUCCESS] Found {len(counties)} counties for {state_code}")
             return counties
         else:
-            print(f"❌ No counties available for {state_code}")
+            print(f"[ERROR] No counties available for {state_code}")
             return []
             
     except Exception as e:
-        print(f"❌ Error getting counties: {e}")
+        print(f"[ERROR] Error getting counties: {e}")
         return []
 
 def get_state_input():
@@ -100,31 +100,31 @@ def get_state_input():
             # Handle numeric input
             if choice in states:
                 selected_state = states[choice]
-                print(f"\n✅ SELECTED: {state_names[selected_state]} ({selected_state})")
+                print(f"\n[SUCCESS] SELECTED: {state_names[selected_state]} ({selected_state})")
                 return selected_state
             
             # Handle full state name input
             choice_upper = choice.upper()
             for state_code, state_name in state_names.items():
                 if choice_upper == state_name.upper():
-                    print(f"\n✅ SELECTED: {state_name} ({state_code})")
+                    print(f"\n[SUCCESS] SELECTED: {state_name} ({state_code})")
                     return state_code
             
             # Handle state abbreviation input
             if choice.upper() in states.values():
                 selected_state = choice.upper()
-                print(f"\n✅ SELECTED: {state_names[selected_state]} ({selected_state})")
+                print(f"\n[SUCCESS] SELECTED: {state_names[selected_state]} ({selected_state})")
                 return selected_state
             
-            print(f"\n❌ INVALID SELECTION: {choice}")
+            print(f"\n[ERROR] INVALID SELECTION: {choice}")
             print("   Please enter a number 1-50, full state name, or state abbreviation.")
                 
         except (ValueError, IndexError):
-            print("❌ Invalid input. Please try again.")
+            print("[ERROR] Invalid input. Please try again.")
 
 def display_counties(counties, state):
     """Display counties with coordinates"""
-    print(f"\n️  COUNTIES IN {state}:")
+    print(f"\n[INFO] COUNTIES IN {state}:")
     print("-" * 80)
     print(f"{'#':<3} {'County':<25} {'Coordinates':<25}")
     print("-" * 80)
@@ -145,7 +145,7 @@ def display_counties(counties, state):
 
 def get_county_selection(counties):
     """Ask user which counties they want"""
-    print(f"\n🏘️  COUNTY SELECTION:")
+    print(f"\n[INFO] COUNTY SELECTION:")
     print(f"Total counties available: {len(counties)}")
     print("Which counties do you want to search?")
     print("1. All counties")
@@ -153,11 +153,11 @@ def get_county_selection(counties):
     
     while True:
         try:
-            choice = input("\n🏘️  Enter your choice (1 or 2): ").strip()
+            choice = input("\n[INPUT] Enter your choice (1 or 2): ").strip()
             
             if choice == "1":
                 selected_counties = counties
-                print(f"✅ Selected: All {len(counties)} counties")
+                print(f"[SUCCESS] Selected: All {len(counties)} counties")
                 return selected_counties
             
             elif choice == "2":
@@ -170,14 +170,14 @@ def get_county_selection(counties):
                 selected_indices = [int(x.strip()) - 1 for x in county_input.split(',')]
                 
                 selected_counties = [counties[i] for i in selected_indices if 0 <= i < len(counties)]
-                print(f"✅ Selected: {len(selected_counties)} counties")
+                print(f"[SUCCESS] Selected: {len(selected_counties)} counties")
                 return selected_counties
             
             else:
-                print("❌ Invalid choice. Please enter 1 or 2.")
+                print("[ERROR] Invalid choice. Please enter 1 or 2.")
                 
         except ValueError:
-            print("❌ Invalid input. Please try again.")
+            print("[ERROR] Invalid input. Please try again.")
 
 def main():
     # Print stylish welcome banner
@@ -192,19 +192,19 @@ def main():
     )
     
     # Step 1: Get search query first
-    print("🔍 ENTER YOUR SEARCH QUERY:")
+    print("[INPUT] ENTER YOUR SEARCH QUERY:")
     print("   Examples: 'mobile home parks', 'property management', 'real estate'")
     print("-" * 60)
     base_search = input("Query: ").strip()
     
     # Step 2: Ask which state
     selected_state = get_state_input()
-    print(f"\n✅ Selected state: {selected_state}")
+    print(f"\n[SUCCESS] Selected state: {selected_state}")
     
     # Step 3: Fetch counties from counties_data.py
     counties = get_counties_from_data(selected_state)
     if not counties:
-        print(f"❌ No counties found for {selected_state}")
+        print(f"[ERROR] No counties found for {selected_state}")
         return
     
     # Step 4: Show counties and their coordinates
@@ -212,7 +212,7 @@ def main():
     
     # Step 5: Ask which counties user wants
     selected_counties = get_county_selection(counties)
-    print(f"\n✅ Selected counties: {len(selected_counties)} counties")
+    print(f"\n[SUCCESS] Selected counties: {len(selected_counties)} counties")
     
     # Step 6: Ask for output file name
     print("\n" + "="*50)
@@ -223,7 +223,7 @@ def main():
     filenm_base = input().strip()
     
     # Confirm before starting
-    print(f"\n📋 SUMMARY:")
+    print(f"\n[INFO] SUMMARY:")
     print(f"Search Query: {base_search}")
     print(f"State: {selected_state}")
     print(f"Counties: {len(selected_counties)} counties selected")
@@ -231,21 +231,21 @@ def main():
     
     confirm = input("\n Start scraping? (y/n): ").strip().lower()
     if confirm not in ['y', 'yes']:
-        print("❌ Scraping cancelled.")
+        print("[CANCELLED] Scraping cancelled.")
         return
     
     # Start scraping
     start_time = time.time()
-    print(f"\n⏰ Start time: {time.strftime('%H:%M:%S')}")
+    print(f"\n[TIME] Start time: {time.strftime('%H:%M:%S')}")
     
     all_state_data = [] # Collect data from all counties
     for i, county in enumerate(selected_counties, 1):
         county_full = f"{county['name']}, {selected_state}"
         search_term = f"{base_search} in {county_full}"
         
-        print(f"\n🚀 County {i}/{len(selected_counties)}: {county_full}")
+        print(f"\n[PROGRESS] County {i}/{len(selected_counties)}: {county_full}")
         print(f" Coords: {county['lat']:.4f}, {county['lon']:.4f}")
-        print(f"🔍 Search term: {search_term}")
+        print(f"[SEARCH] Search term: {search_term}")
         
         try:
             # Create scraper for each county
@@ -266,8 +266,8 @@ def main():
                     results_count=1  # Each business = 1 API call
                 )
             
-            print(f"✅ Completed {county['name']} - {businesses_found} businesses found")
-            print(f"💰 Credits used for this county: ${businesses_found * 0.005:.3f}")
+            print(f"[SUCCESS] Completed {county['name']} - {businesses_found} businesses found")
+            print(f"[CREDITS] Credits used for this county: ${businesses_found * 0.005:.3f}")
 
             # Add county information to each business record
             for business in county_data:
@@ -276,26 +276,26 @@ def main():
                 all_state_data.append(business)
             
         except Exception as e:
-            print(f"❌ Error scraping {county['name']}: {e}")
+            print(f"[ERROR] Error scraping {county['name']}: {e}")
             continue
     
     total_time = time.time() - start_time
-    print(f"\n✅ All counties completed in {total_time:.1f} seconds")
+    print(f"\n[SUCCESS] All counties completed in {total_time:.1f} seconds")
     
     # Save all collected data to a single state file
     if all_state_data:
         try:
             df = pd.DataFrame(all_state_data)
             df.to_excel(f"{filenm_base} - {selected_state}.xlsx", index=False)
-            print(f"\n✅ All data saved to {filenm_base} - {selected_state}.xlsx")
+            print(f"\n[SUCCESS] All data saved to {filenm_base} - {selected_state}.xlsx")
         except Exception as e:
-            print(f"❌ Error saving state-level file: {e}")
+            print(f"[ERROR] Error saving state-level file: {e}")
     else:
-        print("❌ No data collected to save.")
+        print("[ERROR] No data collected to save.")
     
     # Generate final credit report
     print("\n" + "="*60)
-    print("💰 GENERATING CREDIT USAGE REPORT")
+    print("[REPORT] GENERATING CREDIT USAGE REPORT")
     print("="*60)
     
     credit_tracker.get_final_report()
@@ -305,7 +305,7 @@ if __name__ == '__main__':
     
     # Keep the window open after completion
     print("\n" + "="*60)
-    print(" SCRAPING COMPLETED!")
+    print("[COMPLETE] SCRAPING COMPLETED!")
     print("="*60)
     print("Press Enter to close the program...")
     input()
