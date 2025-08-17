@@ -1,11 +1,14 @@
 import sys
 import os
 
-# Force UTF-8 encoding for Windows
+# Force UTF-8 encoding for Windows - remove problematic chcp command
 if sys.platform == "win32":
-    os.system("chcp 65001 > nul")
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except:
+        # Fallback for older Python versions
+        pass
 
 from Google import Scraper
 import requests
