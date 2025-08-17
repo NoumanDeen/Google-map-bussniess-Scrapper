@@ -26,6 +26,12 @@ A professional tool for extracting Google Maps Business (GMB) profiles from mobi
 
 #### Build Steps
 1. **Clone/Download this repository**
+```bash
+   git clone https://github.com/NoumanDeen/Google-map-bussniess.git
+   cd Google-map-bussniess
+   ```
+   *Or download as ZIP from: https://github.com/NoumanDeen/Google-map-bussniess*
+
 2. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
