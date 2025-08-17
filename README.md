@@ -56,19 +56,19 @@ A professional tool for extracting Google Maps Business (GMB) profiles from mobi
 
 4. **Build the executable:**
 
-  **For Windows (.exe):**
+**For Windows (.exe):**
 ```bash
-pyinstaller --onefile --add-data "settings.ini;." --name "GMB_Scraper" main.py
+pyinstaller --onefile --add-data "settings.ini;." --console --name "GMB_Scraper" main.py
 ```
 
 **For Mac (.app):**
 ```bash
-pyinstaller --windowed --add-data "settings.ini;." --name "GMB_Scraper" main.py
+pyinstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
 ```
 
 **For Linux:**
 ```bash
-pyinstaller --onefile --add-data "settings.ini;." --name "GMB_Scraper" main.py
+pyinstaller --onefile --add-data "settings.ini:." --name "GMB_Scraper" main.py
 ```
 
 
