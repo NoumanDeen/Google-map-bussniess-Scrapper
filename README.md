@@ -63,7 +63,7 @@ pyinstaller --onefile --add-data "settings.ini;." --console --name "GMB_Scraper"
 
 **For Mac (.app):**
 ```bash
-pyinstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
+python3 -m pyinstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
 ```
 
 **For Linux:**
