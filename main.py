@@ -14,11 +14,12 @@ from Google import Scraper
 import requests
 import time
 import json
+import random
 import pandas as pd
 from counties_data import counties_data
 from credit_tracker import CreditTracker
 from datetime import datetime
-from Utils import proxy_user, proxy_pass  # Import proxy credentials
+from Utils import proxy_user, proxy_pass, AUTOSAVE_EVERY_COUNTIES, SHUFFLE_COUNTIES, RESUME
 
 def print_welcome_banner():
     """Print a stylish welcome banner"""
@@ -214,21 +215,23 @@ def main():
     selected_counties = get_county_selection(counties)
     print(f"\n[SUCCESS] Selected counties: {len(selected_counties)} counties")
     
-    # Step 6: Ask for output file name
+       # Step 6: Ask for output file name
     print("\n" + "="*50)
     print(" OUTPUT FILE CONFIGURATION")
     print("="*50)
     
     print("Enter output file name (will append state):")
     filenm_base = input().strip()
-    
+    os.makedirs("Output", exist_ok=True)
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    output_filename = os.path.join("Output", f"{filenm_base} - {selected_state} - {timestamp}.xlsx")
+
     # Confirm before starting
     print(f"\n[INFO] SUMMARY:")
     print(f"Search Query: {base_search}")
     print(f"State: {selected_state}")
     print(f"Counties: {len(selected_counties)} counties selected")
-    print(f"Output File: {filenm_base} - {selected_state}.xlsx")
-    
+    print(f"Output File: {output_filename}")
     confirm = input("\n Start scraping? (y/n): ").strip().lower()
     if confirm not in ['y', 'yes']:
         print("[CANCELLED] Scraping cancelled.")
@@ -239,8 +242,22 @@ def main():
     print(f"\n[TIME] Start time: {time.strftime('%H:%M:%S')}")
     
     all_state_data = [] # Collect data from all counties
+
+    completed_path = "completed_counties.txt"
+    completed = set()
+    if RESUME and os.path.exists(completed_path):
+        with open(completed_path, "r", encoding="utf-8") as f:
+            completed = {line.strip() for line in f if line.strip()}
+
+    if SHUFFLE_COUNTIES:
+        random.shuffle(selected_counties)
+
     for i, county in enumerate(selected_counties, 1):
         county_full = f"{county['name']}, {selected_state}"
+        if RESUME and f"{county['name']},{selected_state}" in completed:
+            print(f"[RESUME] Skipping already completed: {county_full}")
+            continue
+        
         search_term = f"{base_search} in {county_full}"
         
         print(f"\n[PROGRESS] County {i}/{len(selected_counties)}: {county_full}")
@@ -275,6 +292,14 @@ def main():
                 business['State'] = selected_state
                 all_state_data.append(business)
             
+            if AUTOSAVE_EVERY_COUNTIES > 0 and (i % AUTOSAVE_EVERY_COUNTIES == 0):
+                pd.DataFrame(all_state_data).to_excel(output_filename, index=False)
+                print(f"[AUTOSAVE] Progress saved to {output_filename}")
+
+            if RESUME:
+                with open(completed_path, "a", encoding="utf-8") as f:
+                    f.write(f"{county['name']},{selected_state}\n")
+
         except Exception as e:
             print(f"[ERROR] Error scraping {county['name']}: {e}")
             continue
@@ -282,14 +307,15 @@ def main():
     total_time = time.time() - start_time
     print(f"\n[SUCCESS] All counties completed in {total_time:.1f} seconds")
     
-    # Save all collected data to a single state file
+      # Save all collected data to a single state file
     if all_state_data:
         try:
             df = pd.DataFrame(all_state_data)
-            df.to_excel(f"{filenm_base} - {selected_state}.xlsx", index=False)
-            print(f"\n[SUCCESS] All data saved to {filenm_base} - {selected_state}.xlsx")
+            df.to_excel(output_filename, index=False)
+            print(f"\n[SUCCESS] All data saved to {output_filename}")
         except Exception as e:
             print(f"[ERROR] Error saving state-level file: {e}")
+       
     else:
         print("[ERROR] No data collected to save.")
     
