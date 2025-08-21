@@ -8,6 +8,58 @@ import os
 import time
 import datetime
 from credit_tracker import CreditTracker
+import threading
+import random
+from time import monotonic
+
+
+UA_POOL = [
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+	"Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0 Safari/537.36",
+	"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
+]
+
+GEOCODE_CACHE_PATH = "geocode_cache.json"
+_cache_lock = threading.Lock()
+try:
+	with open(GEOCODE_CACHE_PATH, "r", encoding="utf-8") as f:
+		GEOCODE_CACHE = json.load(f)
+except Exception:
+	GEOCODE_CACHE = {}
+
+_last_geocode_ts = 0.0
+
+def geocode_with_cache(address):
+	global _last_geocode_ts
+	with _cache_lock:
+		cached = GEOCODE_CACHE.get(address)
+		if cached is not None:
+			return cached
+
+	# simple rate limit
+	now = monotonic()
+	wait = _last_geocode_ts + GEOCODE_MIN_INTERVAL - now
+	if wait > 0:
+		time.sleep(wait)
+
+	# retry with backoff + jitter
+	for attempt in range(MAX_ATTEMPTS):
+		try:
+			r = requests.get(G_URL.format(address), headers=headers, proxies=proxyDict, timeout=30)
+			data = r.json()
+			comps = data.get("results", [{}])[0].get("address_components", [])
+			with _cache_lock:
+				GEOCODE_CACHE[address] = comps
+				try:
+					with open(GEOCODE_CACHE_PATH, "w", encoding="utf-8") as f:
+						json.dump(GEOCODE_CACHE, f, indent=2, ensure_ascii=False, sort_keys=True)
+						f.write("\n")
+				except Exception:
+					pass
+			return comps
+		except Exception:
+			time.sleep((BACKOFF_BASE ** (attempt + 1)) + random.uniform(*JITTER_RANGE))
+	return []
 
 
 class Scraper:
@@ -115,12 +167,17 @@ class Scraper:
                     print("[WARNING] No links found - page might be empty or blocked")
                     break
                 
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    executor.map(self.get_data, links)
+                with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                    executor.map(self.get_data, links, chunksize=1)
                 
                 print(f"[SUCCESS] Data collected - Total businesses so far: {len(self.cmp)}")
                 
                 pg += 1
+                time.sleep(random.uniform(*PAGE_DELAY_RANGE))
+                if pg % LONG_PAUSE_EVERY_PAGES == 0:
+                    pause = random.uniform(*LONG_PAUSE_RANGE)
+                    print(f"[PAUSE] Cooling down for {pause:.1f}s")
+                    time.sleep(pause)
                 nxt_page = response.xpath("//a[contains(@id, 'pnnext')]/@href").get()
                 
                 if nxt_page:
@@ -164,33 +221,50 @@ class Scraper:
         return f"{base_url}?{query_string}"
 
     def get_response(self, URL: str):
-        print(f"[REQUEST] Requesting: {URL[:100]}...")
-        request_start = time.time()
-        
-        if proxy == 1:
-            attempts = 0
-            while True:
-                attempts += 1
-                try:
-                    print(f"[PROXY] Proxy attempt {attempts}")
-                    r = requests.get(URL, headers=headers, proxies=proxyDict, timeout=30)
-                    if r.status_code == 200:
-                        request_time = time.time() - request_start
-                        print(f"[SUCCESS] Success in {request_time:.1f}s (attempt {attempts})")
-                        break
-                    else:
-                        print(f"[WARNING] Status {r.status_code} (attempt {attempts})")
-                except Exception as e:
-                    print(f"[ERROR] Error: {e} (attempt {attempts})")
-                    if attempts > 10:
-                        print("[WARNING] Too many attempts, trying direct connection")
-                        r = requests.get(URL, headers=headers, timeout=30)
-                        break
+        ua = random.choice(UA_POOL)
+        local_headers = dict(headers)
+        local_headers["User-Agent"] = ua
+
+        attempts = 0
+        while attempts < MAX_ATTEMPTS:
+            attempts += 1
+            try:
+                if proxy == 1:
+                    r = requests.get(URL, headers=local_headers, proxies=proxyDict, timeout=30)
+                else:
+                    r = requests.get(URL, headers=local_headers, timeout=30)
+
+                status = r.status_code
+                txt = r.text[:600].lower()
+
+                if status in (429, 503) or "unusual traffic" in txt or "sorry" in txt:
+                    wait = (BACKOFF_BASE ** attempts) + random.uniform(*JITTER_RANGE)
+                    print(f"[BACKOFF] {status}/block detected. Sleeping {wait:.1f}s (attempt {attempts})")
+                    time.sleep(wait)
                     continue
+
+                if status != 200:
+                    wait = (BACKOFF_BASE ** attempts) + random.uniform(*JITTER_RANGE)
+                    print(f"[RETRY] HTTP {status}. Sleeping {wait:.1f}s (attempt {attempts})")
+                    time.sleep(wait)
+                    continue
+
+                return Selector(text=r.content)
+
+            except Exception as e:
+                wait = (BACKOFF_BASE ** attempts) + random.uniform(*JITTER_RANGE)
+                print(f"[ERROR] {e}. Sleeping {wait:.1f}s (attempt {attempts})")
+                time.sleep(wait)
+
+        if proxy == 1:
+            try:
+                r = requests.get(URL, headers=local_headers, timeout=30)
+                return Selector(text=r.content)
+            except Exception as e:
+                print(f"[FATAL] Could not fetch after retries: {e}")
         else:
-            r = requests.get(URL, headers=headers, timeout=30)
-        
-        return Selector(text=r.content)
+            print("[FATAL] Could not fetch after retries.")
+        return Selector(text="")
 
     def get_listings(self, search_term, response: Selector):
         cmp = []
@@ -204,6 +278,7 @@ class Scraper:
         return cmp
 
     def get_data(self, url: str):
+        time.sleep(random.uniform(*DETAIL_DELAY_RANGE))
         response = self.get_response(url)
         name = response.css('h2[data-attrid="title"] span::text').get()
         address = response.css('.w8qArf:contains(Address) + .LrzXr::text').get()
@@ -234,27 +309,16 @@ class Scraper:
         
         st_ad, route = "", ""
         if address:
-            # Track credit usage for geocoding API call
             if self.credit_tracker:
-                self.credit_tracker.track_query(
-                    query=self.search_terms,
-                    state="",  # Will be filled in main.py
-                    county="",  # Will be filled in main.py
-                    results_count=1
-                )
-            
-            r = requests.get(G_URL.format(address), headers=headers)
-            json_resp = json.loads(r.content)
-            for item in json_resp.get("results")[0].get("address_components"):
-                nm = item.get("types")[0]
+                self.credit_tracker.track_query(query=self.search_terms, state="", county="", results_count=1)
+            comps = geocode_with_cache(address)
+            for item in comps:
+                nm = item.get("types", [""])[0]
                 value = item.get("long_name")
-                if nm == "street_number":
-                    st_ad = value
-                if nm == "route":
-                    route = value
+                if nm == "street_number": st_ad = value
+                if nm == "route": route = value
                 nm = address_columns.get(nm)
-                if not nm:
-                    continue
+                if not nm: continue
                 fnl[nm] = value
         fnl["Address"] = f"{st_ad} {route}"
         self.cmp.append(fnl)
