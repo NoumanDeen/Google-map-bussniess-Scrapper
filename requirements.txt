@@ -1,4 +1,5 @@
 requests
 pandas
 scrapy
+openpyxl
 configparser
