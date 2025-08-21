@@ -52,12 +52,59 @@ if os.path.exists(settings_path):
         "http": http_proxy,
         "https": https_proxy,
     }
+
+    # Crawl controls (with defaults)
+    def _getf(section, key, default):
+        try: return float(config.get(section, key))
+        except: return float(default)
+    def _geti(section, key, default):
+        try: return int(config.get(section, key))
+        except: return int(default)
+    def _getb(section, key, default):
+        try: return 1 if int(config.get(section, key)) else 0
+        except: return int(default)
+
+    if 'CRAWL' in config:
+        MAX_WORKERS = _geti("CRAWL", "max_workers", 5)
+        PAGE_DELAY_RANGE = (_getf("CRAWL", "page_delay_min", 2.5), _getf("CRAWL", "page_delay_max", 5.0))
+        DETAIL_DELAY_RANGE = (_getf("CRAWL", "detail_delay_min", 0.4), _getf("CRAWL", "detail_delay_max", 1.0))
+        LONG_PAUSE_EVERY_PAGES = _geti("CRAWL", "long_pause_every_pages", 10)
+        LONG_PAUSE_RANGE = (_getf("CRAWL", "long_pause_min", 15), _getf("CRAWL", "long_pause_max", 35))
+        MAX_ATTEMPTS = _geti("CRAWL", "max_attempts", 3)
+        BACKOFF_BASE = _getf("CRAWL", "backoff_base", 2)
+        JITTER_RANGE = (_getf("CRAWL", "jitter_min", 0.3), _getf("CRAWL", "jitter_max", 1.2))
+        GEOCODE_MIN_INTERVAL = _getf("CRAWL", "geocode_min_interval", 0.2)
+        AUTOSAVE_EVERY_COUNTIES = _geti("CRAWL", "autosave_every_counties", 1)
+        SHUFFLE_COUNTIES = _getb("CRAWL", "shuffle_counties", 1)
+        RESUME = _getb("CRAWL", "resume", 1)
+    else:
+        MAX_WORKERS = 5
+        PAGE_DELAY_RANGE = (2.5, 5.0)
+        DETAIL_DELAY_RANGE = (0.4, 1.0)
+        LONG_PAUSE_EVERY_PAGES = 10
+        LONG_PAUSE_RANGE = (15, 35)
+        MAX_ATTEMPTS = 3
+        BACKOFF_BASE = 2
+        JITTER_RANGE = (0.3, 1.2)
+        GEOCODE_MIN_INTERVAL = 0.2
+        AUTOSAVE_EVERY_COUNTIES = 1
+        SHUFFLE_COUNTIES = 1
+        RESUME = 1
 else:
     # Default values if settings.ini is not found
     proxy = 0
     proxyDict = {}
     print("⚠️  Warning: settings.ini not found, running without proxy")
-
-
-def similar(a, b):
-    return SequenceMatcher(None, a, b).ratio()*100
+    # Defaults for crawl controls
+    MAX_WORKERS = 5
+    PAGE_DELAY_RANGE = (2.5, 5.0)
+    DETAIL_DELAY_RANGE = (0.4, 1.0)
+    LONG_PAUSE_EVERY_PAGES = 10
+    LONG_PAUSE_RANGE = (15, 35)
+    MAX_ATTEMPTS = 3
+    BACKOFF_BASE = 2
+    JITTER_RANGE = (0.3, 1.2)
+    GEOCODE_MIN_INTERVAL = 0.2
+    AUTOSAVE_EVERY_COUNTIES = 1
+    SHUFFLE_COUNTIES = 1
+    RESUME = 1
