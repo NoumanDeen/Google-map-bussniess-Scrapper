@@ -1,121 +1,172 @@
+#!/usr/bin/env python3
+"""
+Corrected Credit Tracker - Integrated Version
+Tracks real PacketStream costs and Google Maps API usage during scraping
+"""
+
 import json
 import os
 import time
 from datetime import datetime
 import requests
 
-class CreditTracker:
+class CorrectedCreditTracker:
     def __init__(self, api_key=None, proxy_user=None, proxy_pass=None):
         self.api_key = api_key
         self.proxy_user = proxy_user
         self.proxy_pass = proxy_pass
-        self.credits_used = 0
-        self.credits_remaining = None
-        self.query_stats = {}
-        self.state_stats = {}
         self.start_time = time.time()
         
-        # Proxy usage tracking
-        self.proxy_requests_made = 0
-        self.proxy_requests_failed = 0
+        # PacketStream tracking (REAL COSTS)
+        self.packetstream_data_used_mb = 0
+        self.packetstream_data_used_gb = 0
+        self.packetstream_cost = 0
+        self.packetstream_requests_made = 0
+        self.packetstream_requests_failed = 0
+        self.packetstream_cost_per_gb = 0.48  # $0.48 per GB
+        
+        # Google Maps API tracking (QUOTA, NOT COSTS)
+        self.google_api_requests_made = 0
+        self.google_api_quota_status = "Unknown"
+        self.google_api_free_tier_limit = 1000  # Free tier: 1000 requests/month
+        
+        # Session tracking
+        self.query_stats = {}
+        self.state_stats = {}
         self.last_proxy_check = None
         
         # Load existing stats if available
         self.load_stats()
         
-        # Check initial credits if API key provided
+        # Check initial status
         if self.api_key:
-            self.check_remaining_credits()
-        
-        # Initialize proxy status
-        self.check_proxy_status()
+            self.check_google_api_status()
+        self.check_packetstream_status()
     
     def load_stats(self):
-        """Load existing credit statistics from file"""
+        """Load existing statistics from file"""
         try:
-            if os.path.exists("credit_stats.json"):
-                with open("credit_stats.json", "r") as f:
+            if os.path.exists("corrected_credit_stats.json"):
+                with open("corrected_credit_stats.json", "r") as f:
                     data = json.load(f)
-                    # Round to 3 decimal places for realistic display
-                    self.credits_used = round(data.get("total_credits_used", 0), 3)
-                    self.query_stats = data.get("query_stats", {})
                     
-                    # Convert lists back to sets when loading
-                    loaded_state_stats = data.get("state_stats", {})
-                    for state, stats in loaded_state_stats.items():
-                        if "queries" in stats and isinstance(stats["queries"], list):
-                            stats["queries"] = set(stats["queries"])  # Convert list back to set
-                    self.state_stats = loaded_state_stats
+                    # Load PacketStream stats
+                    self.packetstream_data_used_mb = data.get("packetstream_data_used_mb", 0)
+                    self.packetstream_data_used_gb = data.get("packetstream_data_used_gb", 0)
+                    self.packetstream_cost = data.get("packetstream_cost", 0)
+                    self.packetstream_requests_made = data.get("packetstream_requests_made", 0)
                     
-                    print(f"📊 Loaded existing stats: ${self.credits_used:.3f} credits used")
+                    # Load Google API stats
+                    self.google_api_requests_made = data.get("google_api_requests_made", 0)
+                    
+                    # Load other stats (convert lists back to sets)
+                    self.query_stats = {}
+                    for query, stats in data.get("query_stats", {}).items():
+                        self.query_stats[query] = {
+                            "total_businesses": stats.get("total_businesses", 0),
+                            "states": set(stats.get("states", [])),  # Convert list to set
+                            "counties": set(stats.get("counties", [])),  # Convert list to set
+                            "last_used": stats.get("last_used")
+                        }
+                    
+                    self.state_stats = {}
+                    for state, stats in data.get("state_stats", {}).items():
+                        self.state_stats[state] = {
+                            "total_businesses": stats.get("total_businesses", 0),
+                            "counties": set(stats.get("counties", [])),  # Convert list to set
+                            "queries": set(stats.get("queries", [])),    # Convert list to set
+                            "last_used": stats.get("last_used")
+                        }
+                    
+                    print(f"📊 Loaded existing stats:")
+                    print(f"   PacketStream: {self.packetstream_data_used_gb:.2f} GB used, ${self.packetstream_cost:.2f}")
+                    print(f"   Google API: {self.google_api_requests_made} requests made")
+                    
         except Exception as e:
             print(f"⚠️  Could not load existing stats: {e}")
     
     def save_stats(self):
-        """Save current credit statistics to file"""
+        """Save current statistics to file"""
         try:
             # Convert sets to lists for JSON serialization
-            serializable_state_stats = {}
+            query_stats_json = {}
+            for query, stats in self.query_stats.items():
+                query_stats_json[query] = {
+                    "total_businesses": stats["total_businesses"],
+                    "states": list(stats["states"]),  # Convert set to list
+                    "counties": list(stats["counties"]),  # Convert set to list
+                    "last_used": stats["last_used"]
+                }
+            
+            state_stats_json = {}
             for state, stats in self.state_stats.items():
-                serializable_state_stats[state] = {
-                    "total_requests": stats["total_requests"],
-                    "total_credits": round(stats["total_credits"], 3),  # Round to 3 decimals
-                    "counties": stats["counties"],
-                    "queries": list(stats["queries"]),  # Convert set to list
+                state_stats_json[state] = {
+                    "total_businesses": stats["total_businesses"],
+                    "counties": list(stats["counties"]),  # Convert set to list
+                    "queries": list(stats["queries"]),    # Convert set to list
                     "last_used": stats["last_used"]
                 }
             
             data = {
                 "last_updated": datetime.now().isoformat(),
-                "total_credits_used": round(self.credits_used, 3),  # Round to 3 decimals
-                "query_stats": self.query_stats,
-                "state_stats": serializable_state_stats,  # Use serializable version
+                
+                # PacketStream stats
+                "packetstream_data_used_mb": self.packetstream_data_used_mb,
+                "packetstream_data_used_gb": self.packetstream_data_used_gb,
+                "packetstream_cost": self.packetstream_cost,
+                "packetstream_requests_made": self.packetstream_requests_made,
+                "packetstream_requests_failed": self.packetstream_requests_failed,
+                "packetstream_cost_per_gb": self.packetstream_cost_per_gb,
+                
+                # Google API stats
+                "google_api_requests_made": self.google_api_requests_made,
+                "google_api_quota_status": self.google_api_quota_status,
+                "google_api_free_tier_limit": self.google_api_free_tier_limit,
+                
+                # Other stats (converted to JSON-serializable format)
+                "query_stats": query_stats_json,
+                "state_stats": state_stats_json,
                 "session_duration": time.time() - self.start_time
             }
             
-            with open("credit_stats.json", "w") as f:
+            with open("corrected_credit_stats.json", "w") as f:
                 json.dump(data, f, indent=2)
             
-            print(f" Credit stats saved to credit_stats.json")
         except Exception as e:
-            print(f"❌ Error saving credit stats: {e}")
+            print(f"❌ Error saving stats: {e}")
     
-    def check_remaining_credits(self):
-        """Check remaining Google Maps API credits"""
+    def check_google_api_status(self):
+        """Check Google Maps API quota status (FREE)"""
         if not self.api_key:
-            print("⚠️  No API key provided to check remaining credits")
             return
         
         try:
-            # Use a simple geocoding request to check quota
             test_url = f"https://maps.googleapis.com/maps/api/geocode/json?address=test&key={self.api_key}"
-            response = requests.get(test_url)
+            response = requests.get(test_url, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
-                if data.get("status") == "OVER_QUERY_LIMIT":
-                    print("⚠️  API quota exceeded!")
-                    self.credits_remaining = 0
-                elif data.get("status") == "REQUEST_DENIED":
-                    print("❌ API key invalid or restricted")
-                    self.credits_remaining = 0
-                else:
-                    # Note: Google doesn't provide exact credit count in response
-                    # This is an estimate based on typical usage
-                    print("✅ API key valid - credits available")
-                    self.credits_remaining = "Unknown (check Google Cloud Console)"
-            else:
-                print(f"⚠️  Could not check API status: {response.status_code}")
+                status = data.get("status", "UNKNOWN")
                 
+                if status == "OK" or status == "ZERO_RESULTS":
+                    remaining = max(0, self.google_api_free_tier_limit - self.google_api_requests_made)
+                    self.google_api_quota_status = f"Available ({remaining} requests remaining)"
+                elif status == "OVER_QUERY_LIMIT":
+                    self.google_api_quota_status = "Quota Exceeded"
+                elif status == "REQUEST_DENIED":
+                    self.google_api_quota_status = "Invalid Key"
+                else:
+                    self.google_api_quota_status = f"Status: {status}"
+                    
         except Exception as e:
-            print(f"❌ Error checking API credits: {e}")
+            print(f"❌ Error checking Google Maps API: {e}")
     
-    def check_proxy_status(self):
-        """Check if PacketStream proxy is working and estimate credits"""
+    def check_packetstream_status(self):
+        """Check PacketStream proxy status"""
+        if not self.proxy_user or not self.proxy_pass:
+            return
+        
         try:
-            print("🔍 Checking PacketStream proxy status...")
-            
-            # Test proxy connection
             test_url = "http://httpbin.org/ip"
             proxy_url = f"http://{self.proxy_user}:{self.proxy_pass}@proxy.packetstream.io:31112"
             
@@ -127,171 +178,116 @@ class CreditTracker:
             response = requests.get(test_url, proxies=proxies, timeout=15)
             
             if response.status_code == 200:
-                print("✅ PacketStream proxy is active and working")
-                self.credits_remaining = "Proxy Active - Credits Available"
                 self.last_proxy_check = datetime.now().isoformat()
-            else:
-                print(f"⚠️  Proxy test failed: {response.status_code}")
-                self.credits_remaining = "Proxy Inactive - Check Account"
                 
         except Exception as e:
-            print(f"❌ Proxy test error: {e}")
-            self.credits_remaining = "Proxy Error - Check Connection"
+            print(f"❌ PacketStream test error: {e}")
     
-    def track_proxy_request(self, success=True):
-        """Track proxy usage to estimate remaining credits"""
-        if success:
-            self.proxy_requests_made += 1
-        else:
-            self.proxy_requests_failed += 1
+    def track_packetstream_request(self, response_size_bytes=0):
+        """Track PacketStream bandwidth usage (REAL COSTS)"""
+        # Convert bytes to MB/GB
+        size_mb = response_size_bytes / (1024 * 1024)
+        size_gb = size_mb / 1024
         
-        # Estimate remaining credits based on typical PacketStream limits
-        # This is an approximation since we can't get exact API data
-        estimated_total_requests = 10000  # Typical PacketStream monthly limit
-        estimated_remaining = max(0, estimated_total_requests - self.proxy_requests_made)
+        # Update totals
+        self.packetstream_data_used_mb += size_mb
+        self.packetstream_data_used_gb += size_gb
+        self.packetstream_requests_made += 1
         
-        if estimated_remaining < 100:
-            self.credits_remaining = f"Low Credits (~{estimated_remaining} requests left)"
-        elif estimated_remaining < 1000:
-            self.credits_remaining = f"Medium Credits (~{estimated_remaining} requests left)"
-        else:
-            self.credits_remaining = f"Good Credits (~{estimated_remaining} requests left)"
+        # Calculate cost
+        self.packetstream_cost = self.packetstream_data_used_gb * self.packetstream_cost_per_gb
+        
+        # Save after each request
+        self.save_stats()
     
-    def refresh_proxy_status(self):
-        """Refresh proxy status and estimate remaining credits"""
-        self.check_proxy_status()
-        self.track_proxy_request(success=True)
-    
-    def track_query(self, query, state, county=None, results_count=0):
-        """Track credits used for a specific query"""
-        # Google Maps Geocoding API costs:
-        # - $5 per 1000 requests
-        # - Each business address lookup = 1 request
+    def track_google_api_request(self):
+        """Track Google Maps API usage (FREE, just quota)"""
+        self.google_api_requests_made += 1
         
+        # Check if approaching free tier limit
+        if self.google_api_requests_made >= self.google_api_free_tier_limit * 0.9:
+            print(f"⚠️  Google Maps API: {self.google_api_requests_made}/{self.google_api_free_tier_limit} requests used")
+        
+        # Save after each request
+        self.save_stats()
+    
+    def track_query(self, query, state, county=None, businesses_found=0):
+        """Track query statistics (no costs, just usage)"""
         if query not in self.query_stats:
             self.query_stats[query] = {
-                "total_requests": 0,
-                "total_credits": 0,
-                "states": {},
-                "counties": {},
+                "total_businesses": 0,
+                "states": set(),  # Keep as set for operations
+                "counties": set(),  # Keep as set for operations
                 "last_used": None
             }
         
         # Update query stats
-        self.query_stats[query]["total_requests"] += results_count  # Use results_count instead of 1
-        self.query_stats[query]["total_credits"] = round(self.query_stats[query]["total_credits"] + (results_count * 0.005), 3)  # Round to 3 decimals
+        self.query_stats[query]["total_businesses"] += businesses_found
+        self.query_stats[query]["states"].add(state)
+        if county:
+            self.query_stats[query]["counties"].add(county)
         self.query_stats[query]["last_used"] = datetime.now().isoformat()
         
         # Update state stats
         if state not in self.state_stats:
             self.state_stats[state] = {
-                "total_requests": 0,
-                "total_credits": 0,
-                "counties": {},
-                "queries": set(),
+                "total_businesses": 0,
+                "counties": set(),  # Keep as set for operations
+                "queries": set(),   # Keep as set for operations
                 "last_used": None
             }
         
-        self.state_stats[state]["total_requests"] += results_count  # Use results_count
-        self.state_stats[state]["total_credits"] = round(self.state_stats[state]["total_credits"] + (results_count * 0.005), 3)  # Round to 3 decimals
+        self.state_stats[state]["total_businesses"] += businesses_found
+        if county:
+            self.state_stats[state]["counties"].add(county)
         self.state_stats[state]["queries"].add(query)
         self.state_stats[state]["last_used"] = datetime.now().isoformat()
         
-        # Update county stats if provided
-        if county:
-            if county not in self.state_stats[state]["counties"]:
-                self.state_stats[state]["counties"][county] = {
-                    "total_requests": 0,
-                    "total_credits": 0,
-                    "last_used": None
-                }
-            
-            self.state_stats[state]["counties"][county]["total_requests"] += results_count  # Use results_count
-            self.state_stats[state]["counties"][county]["total_credits"] = round(self.state_stats[state]["counties"][county]["total_credits"] + (results_count * 0.005), 3)  # Round to 3 decimals
-            self.state_stats[state]["counties"][county]["last_used"] = datetime.now().isoformat()
-        
-        # Update total credits used
-        self.credits_used = round(self.credits_used + (results_count * 0.005), 3)  # Round to 3 decimals
-        
-        # Save stats after each update
+        # Save stats
         self.save_stats()
     
-    def get_query_summary(self, query=None):
-        """Get summary of credits used for queries"""
-        if query:
-            if query in self.query_stats:
-                stats = self.query_stats[query]
-                print(f"\n📊 QUERY SUMMARY: {query}")
-                print(f"   Total Requests: {stats['total_requests']}")
-                print(f"   Total Credits: ${stats['total_credits']:.3f}")
-                print(f"   States Covered: {list(stats['states'].keys())}")
-                print(f"   Last Used: {stats['last_used']}")
-            else:
-                print(f"❌ No data found for query: {query}")
-        else:
-            print(f"\n📊 ALL QUERIES SUMMARY:")
-            for q, stats in self.query_stats.items():
-                print(f"   {q}: {stats['total_requests']} requests, ${stats['total_credits']:.3f}")
-    
-    def get_state_summary(self, state=None):
-        """Get summary of credits used per state"""
-        if state:
-            if state in self.state_stats:
-                stats = self.state_stats[state]
-                print(f"\n🌍 STATE SUMMARY: {state}")
-                print(f"   Total Requests: {stats['total_requests']}")
-                print(f"   Total Credits: ${stats['total_credits']:.3f}")
-                print(f"   Counties: {list(stats['counties'].keys())}")
-                print(f"   Queries: {list(stats['queries'])}")
-                print(f"   Last Used: {stats['last_used']}")
-            else:
-                print(f"❌ No data found for state: {state}")
-        else:
-            print(f"\n�� ALL STATES SUMMARY:")
-            for s, stats in self.state_stats.items():
-                print(f"   {s}: {stats['total_requests']} requests, ${stats['total_credits']:.3f}")
-    
     def get_final_report(self):
-        """Generate final credit usage report"""
+        """Generate comprehensive usage report"""
         total_time = time.time() - self.start_time
         
-        # Refresh proxy status before final report
-        self.refresh_proxy_status()
+        # Refresh status
+        self.check_google_api_status()
+        self.check_packetstream_status()
         
         print("\n" + "="*80)
-        print(" FINAL CREDIT USAGE REPORT")
+        print(" CORRECTED USAGE REPORT")
         print("="*80)
         
         print(f"⏰ Session Duration: {total_time:.1f} seconds")
-        print(f" Total Credits Used: ${self.credits_used:.3f}")
-        print(f" API Key Status: {'Valid' if self.credits_remaining != 0 else 'Invalid/Exceeded'}")
         
-        # Show PacketStream proxy status
-        if self.proxy_user and self.proxy_pass:
-            print(f"🌐 PacketStream Status: {self.credits_remaining}")
-            print(f"📊 Proxy Requests Made: {self.proxy_requests_made}")
-            print(f"❌ Proxy Requests Failed: {self.proxy_requests_failed}")
-            print(f"🔄 Last Proxy Check: {self.last_proxy_check}")
+        # PacketStream Costs (REAL COSTS)
+        print(f"\n PACKETSTREAM PROXY (REAL COSTS):")
+        print(f"   Data Used: {self.packetstream_data_used_mb:.2f} MB")
+        print(f"   Cost: ${self.packetstream_cost:.6f}")
+        print(f"   Requests Made: {self.packetstream_requests_made}")
+        print(f"   Requests Failed: {self.packetstream_requests_failed}")
+        print(f"   Cost per GB: ${self.packetstream_cost_per_gb}")
         
-        print(f"\n📊 BY QUERY:")
+        # Google Maps API (FREE)
+        print(f"\n🗺️  GOOGLE MAPS API (FREE):")
+        print(f"   Requests Made: {self.google_api_requests_made}")
+        print(f"   Free Tier Limit: {self.google_api_free_tier_limit}")
+        print(f"   Remaining: {max(0, self.google_api_free_tier_limit - self.google_api_requests_made)}")
+        print(f"   Status: {self.google_api_quota_status}")
+        
+        # Query Statistics
+        print(f"\n📊 QUERY STATISTICS:")
         for query, stats in self.query_stats.items():
-            print(f"   {query}: {stats['total_requests']} requests, ${stats['total_credits']:.3f}")
+            print(f"   {query}: {stats['total_businesses']} businesses")
+            print(f"     States: {len(stats['states'])}")
+            print(f"     Counties: {len(stats['counties'])}")
         
-        print(f"\n🌍 BY STATE:")
+        # State Statistics
+        print(f"\n🌍 STATE STATISTICS:")
         for state, stats in self.state_stats.items():
-            print(f"   {state}: {stats['total_requests']} requests, ${stats['total_credits']:.3f}")
-            
-            # Show county breakdown
-            for county, county_stats in stats['counties'].items():
-                print(f"     {county}: {county_stats['total_requests']} requests, ${county_stats['total_credits']:.3f}")
-        
-        # Show proxy-based credit estimation
-        if self.proxy_user and self.proxy_pass:
-            print(f"\n💡 PacketStream Credits: {self.credits_remaining}")
-        else:
-            # Fallback to estimate if no proxy
-            estimated_remaining = max(0, 200 - self.credits_used * 1000)
-            print(f"\n💡 Estimated remaining requests: ~{estimated_remaining:.0f}")
+            print(f"   {state}: {stats['total_businesses']} businesses")
+            print(f"     Counties: {len(stats['counties'])}")
+            print(f"     Queries: {len(stats['queries'])}")
         
         print("="*80)
         
@@ -299,11 +295,8 @@ class CreditTracker:
         self.save_stats()
         
         return {
-            "total_credits": self.credits_used,
-            "total_requests": sum(stats['total_requests'] for stats in self.query_stats.values()),
-            "states_covered": list(self.state_stats.keys()),
-            "queries_used": list(self.query_stats.keys()),
-            "packetstream_credits": self.credits_remaining,
-            "proxy_requests": self.proxy_requests_made,
-            "proxy_failures": self.proxy_requests_failed
+            "packetstream_cost": self.packetstream_cost,
+            "packetstream_data_gb": self.packetstream_data_used_gb,
+            "google_api_requests": self.google_api_requests_made,
+            "total_businesses": sum(stats['total_businesses'] for stats in self.query_stats.values())
         }
