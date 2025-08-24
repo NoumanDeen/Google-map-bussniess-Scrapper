@@ -7,7 +7,7 @@ import json
 import os
 import time
 import datetime
-from credit_tracker import CreditTracker
+from credit_tracker import CorrectedCreditTracker
 import threading
 import random
 from time import monotonic
@@ -48,6 +48,11 @@ def geocode_with_cache(address):
 			r = requests.get(G_URL.format(address), headers=headers, proxies=proxyDict, timeout=30)
 			data = r.json()
 			comps = data.get("results", [{}])[0].get("address_components", [])
+			
+			# Track Google Maps API usage (FREE, just quota)
+			# Note: We need to access the credit_tracker from the Scraper instance
+			# This will be handled in the get_data method
+			
 			with _cache_lock:
 				GEOCODE_CACHE[address] = comps
 				try:
@@ -231,6 +236,10 @@ class Scraper:
             try:
                 if proxy == 1:
                     r = requests.get(URL, headers=local_headers, proxies=proxyDict, timeout=30)
+                    # Track PacketStream usage (REAL COSTS)
+                    if hasattr(self, 'credit_tracker') and self.credit_tracker:
+                        response_size = len(r.content)
+                        self.credit_tracker.track_packetstream_request(response_size)
                 else:
                     r = requests.get(URL, headers=local_headers, timeout=30)
 
@@ -309,8 +318,10 @@ class Scraper:
         
         st_ad, route = "", ""
         if address:
-            if self.credit_tracker:
-                self.credit_tracker.track_query(query=self.search_terms, state="", county="", results_count=1)
+            # Track Google Maps API usage (FREE, just quota)
+            if hasattr(self, 'credit_tracker') and self.credit_tracker:
+                self.credit_tracker.track_google_api_request()
+            
             comps = geocode_with_cache(address)
             for item in comps:
                 nm = item.get("types", [""])[0]
