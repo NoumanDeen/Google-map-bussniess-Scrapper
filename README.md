@@ -15,200 +15,227 @@ A professional tool for extracting Google Maps Business (GMB) profiles from mobi
 
 ### Option 1: Run with Python (All Platforms)
 
-#### Windows
-1. **Install Python 3.7+** from [python.org](https://python.org)
-   - Download Windows installer
-   - Check "Add Python to PATH" during installation
+#### Windows Step-by-Step
 
-2. **Open Command Prompt or PowerShell:**
+**Step 1: Install Python**
+1. Go to [python.org](https://python.org)
+2. Download Python 3.7+ for Windows
+3. Run the installer
+4. **IMPORTANT**: Check "Add Python to PATH" during installation
+5. Click "Install Now"
+
+**Step 2: Verify Installation**
+1. Open Command Prompt (Press `Win + R`, type `cmd`, press Enter)
+2. Type: `python --version`
+3. You should see: `Python 3.x.x`
+4. Type: `pip --version`
+5. You should see: `pip x.x.x`
+
+**Step 3: Download Project**
+1. Open Command Prompt
+2. Navigate to your desired folder: `cd C:\Users\YourName\Desktop`
+3. Clone the repository:
    ```cmd
    git clone https://github.com/NoumanDeen/Google-map-bussniess.git
+   ```
+4. Enter the folder:
+   ```cmd
    cd Google-map-bussniess
-   pip install -r requirements.txt
-   python main.py
    ```
 
-#### macOS
-1. **Install Python 3.7+** from [python.org](https://python.org)
-   - Download macOS installer
-   - Or use Homebrew: `brew install python3`
+**Step 4: Install Dependencies**
+```cmd
+pip install -r requirements.txt
+```
 
-2. **Open Terminal:**
+**Step 5: Run the Application**
+```cmd
+python main.py
+```
+
+#### macOS Step-by-Step
+
+**Step 1: Install Python**
+1. Go to [python.org](https://python.org)
+2. Download Python 3.7+ for macOS
+3. Run the installer
+4. Follow the installation wizard
+
+**Step 2: Verify Installation**
+1. Open Terminal (Applications → Utilities → Terminal)
+2. Type: `python3 --version`
+3. You should see: `Python 3.x.x`
+4. Type: `pip3 --version`
+5. You should see: `pip x.x.x`
+
+**Step 3: Download Project**
+1. Open Terminal
+2. Navigate to your desired folder: `cd ~/Desktop`
+3. Clone the repository:
    ```bash
    git clone https://github.com/NoumanDeen/Google-map-bussniess.git
+   ```
+4. Enter the folder:
+   ```bash
    cd Google-map-bussniess
-   pip3 install -r requirements.txt
-   python3 main.py
    ```
 
-#### Linux (Ubuntu/Debian)
-1. **Install Python 3.7+:**
+**Step 4: Install Dependencies**
+```bash
+pip3 install -r requirements.txt
+```
+
+**Step 5: Run the Application**
+```bash
+python3 main.py
+```
+
+#### Linux (Ubuntu/Debian) Step-by-Step
+
+**Step 1: Install Python**
+1. Open Terminal
+2. Update package list:
    ```bash
    sudo apt update
+   ```
+3. Install Python and pip:
+   ```bash
    sudo apt install python3 python3-pip git
    ```
 
-2. **Clone and run:**
+**Step 2: Verify Installation**
+1. Type: `python3 --version`
+2. You should see: `Python 3.x.x`
+3. Type: `pip3 --version`
+4. You should see: `pip x.x.x`
+
+**Step 3: Download Project**
+1. Navigate to your desired folder: `cd ~/Desktop`
+2. Clone the repository:
    ```bash
    git clone https://github.com/NoumanDeen/Google-map-bussniess.git
+   ```
+3. Enter the folder:
+   ```bash
    cd Google-map-bussniess
-   pip3 install -r requirements.txt
-   python3 main.py
    ```
 
-#### Linux (CentOS/RHEL/Fedora)
-1. **Install Python 3.7+:**
-   ```bash
-   # CentOS/RHEL
-   sudo yum install python3 python3-pip git
-   
-   # Fedora
-   sudo dnf install python3 python3-pip git
-   ```
+**Step 4: Install Dependencies**
+```bash
+pip3 install -r requirements.txt
+```
 
-2. **Clone and run:**
-   ```bash
-   git clone https://github.com/NoumanDeen/Google-map-bussniess.git
-   cd Google-map-bussniess
-   pip3 install -r requirements.txt
-   python3 main.py
-   ```
+**Step 5: Run the Application**
+```bash
+python3 main.py
+```
 
 ### Option 2: Build Executable
 
-#### Windows (.exe)
+#### Windows (.exe) Step-by-Step
 
-**Prerequisites:**
-- Python 3.7+ installed
-- Git or download repository as ZIP
-
-**Build Steps:**
-1. **Clone/Download repository:**
+**Step 1: Install PyInstaller**
+1. Open Command Prompt in the project folder
+2. Install PyInstaller:
    ```cmd
-   git clone https://github.com/NoumanDeen/Google-map-bussniess.git
-   cd Google-map-bussniess
-   ```
-   *Or download as ZIP from: https://github.com/NoumanDeen/Google-map-bussniess*
-
-2. **Install dependencies:**
-   ```cmd
-   pip install -r requirements.txt
    pip install pyinstaller
    ```
 
-3. **Build executable:**
-   ```cmd
-   pyinstaller --onefile --add-data "settings.ini;." --console --name "GMB_Scraper" main.py
-   ```
+**Step 2: Build Executable**
+```cmd
+pyinstaller --onefile --add-data "settings.ini;." --console --name "GMB_Scraper" main.py
+```
 
-4. **Find your .exe** in the `dist` folder
+**Step 3: Find Your Executable**
+1. Look in the `dist` folder
+2. You'll find `GMB_Scraper.exe`
+3. Double-click to run
 
 **🎯 One-Click Build (Windows):**
-Simply double-click `build.bat` and wait for the build to complete!
+Simply double-click `build.bat` and wait for completion!
 
-#### macOS (.app)
+#### macOS (.app) Step-by-Step
 
-**Prerequisites:**
-- macOS 10.14+ (Mojave or later)
-- Python 3.7+ installed
-- Git (usually pre-installed)
-
-**Build Steps:**
-1. **Open Terminal** (Applications → Utilities → Terminal)
-
-2. **Install Homebrew** (if needed):
+**Step 1: Install PyInstaller**
+1. Open Terminal in the project folder
+2. Install PyInstaller:
    ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
-
-3. **Install Python** (if needed):
-   ```bash
-   brew install python3
-   ```
-
-4. **Clone and build:**
-   ```bash
-   git clone https://github.com/NoumanDeen/Google-map-bussniess.git
-   cd Google-map-bussniess
-   pip3 install -r requirements.txt
    pip3 install pyinstaller
-   python3 -m PyInstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
    ```
 
-5. **Find your .app** in the `dist` folder
+**Step 2: Build Application**
+```bash
+python3 -m PyInstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
+```
+
+**Step 3: Find Your Application**
+1. Look in the `dist` folder
+2. You'll find `GMB_Scraper.app`
+3. Double-click to run
 
 **Alternative - Single Executable:**
 ```bash
 python3 -m PyInstaller --onefile --add-data "settings.ini:." --name "GMB_Scraper" main.py
 ```
 
-#### Linux (Binary)
+#### Linux (Binary) Step-by-Step
 
-**Prerequisites:**
-- Python 3.7+ installed
-- Git installed
+**Step 1: Install PyInstaller**
+1. Open Terminal in the project folder
+2. Install PyInstaller:
+   ```bash
+   pip3 install pyinstaller
+   ```
 
-**Ubuntu/Debian Build:**
+**Step 2: Build Binary**
 ```bash
-# Install dependencies
-sudo apt update
-sudo apt install python3 python3-pip git
-
-# Clone and build
-git clone https://github.com/NoumanDeen/Google-map-bussniess.git
-cd Google-map-bussniess
-pip3 install -r requirements.txt
-pip3 install pyinstaller
 pyinstaller --onefile --add-data "settings.ini:." --name "GMB_Scraper" main.py
 ```
 
-**CentOS/RHEL/Fedora Build:**
+**Step 3: Make Executable**
 ```bash
-# Install dependencies
-sudo yum install python3 python3-pip git  # CentOS/RHEL
-# OR
-sudo dnf install python3 python3-pip git  # Fedora
-
-# Clone and build
-git clone https://github.com/NoumanDeen/Google-map-bussniess.git
-cd Google-map-bussniess
-pip3 install -r requirements.txt
-pip3 install pyinstaller
-pyinstaller --onefile --add-data "settings.ini:." --name "GMB_Scraper" main.py
+chmod +x dist/GMB_Scraper
 ```
 
-**Arch Linux Build:**
+**Step 4: Run**
 ```bash
-# Install dependencies
-sudo pacman -S python python-pip git
-
-# Clone and build
-git clone https://github.com/NoumanDeen/Google-map-bussniess.git
-cd Google-map-bussniess
-pip install -r requirements.txt
-pip install pyinstaller
-pyinstaller --onefile --add-data "settings.ini:." --name "GMB_Scraper" main.py
+./dist/GMB_Scraper
 ```
 
 ## 🖥️ GUI Builder (All Platforms)
 
 ### Windows
-```cmd
-pip install auto-py-to-exe
-auto-py-to-exe
-```
+1. Open Command Prompt in project folder
+2. Install GUI tool:
+   ```cmd
+   pip install auto-py-to-exe
+   ```
+3. Run GUI:
+   ```cmd
+   auto-py-to-exe
+   ```
 
 ### macOS
-```bash
-pip3 install auto-py-to-exe
-python3 -m auto_py_to_exe
-```
+1. Open Terminal in project folder
+2. Install GUI tool:
+   ```bash
+   pip3 install auto-py-to-exe
+   ```
+3. Run GUI:
+   ```bash
+   python3 -m auto_py_to_exe
+   ```
 
 ### Linux
-```bash
-pip3 install auto-py-to-exe
-python3 -m auto_py_to_exe
-```
+1. Open Terminal in project folder
+2. Install GUI tool:
+   ```bash
+   pip3 install auto-py-to-exe
+   ```
+3. Run GUI:
+   ```bash
+   python3 -m auto_py_to_exe
+   ```
 
 **GUI Settings (All Platforms):**
 - **Script Location**: Select `main.py`
@@ -221,19 +248,14 @@ python3 -m auto_py_to_exe
 
 ### Windows Issues
 
+**Python not found:**
+1. Reinstall Python and check "Add to PATH"
+2. Or manually add: `C:\Users\YourUser\AppData\Local\Programs\Python\Python3x\`
+
 **Import Errors:**
 ```cmd
 pyinstaller --onefile --hidden-import=scrapy --hidden-import=scrapy.selector --hidden-import=pandas --hidden-import=requests --add-data "settings.ini;." --name "GMB_Scraper" main.py
 ```
-
-**File Not Found:**
-```cmd
-pyinstaller --onefile --add-data "settings.ini;." --name "GMB_Scraper" main.py
-```
-
-**Python not in PATH:**
-- Reinstall Python and check "Add to PATH"
-- Or add manually: `C:\Users\YourUser\AppData\Local\Programs\Python\Python3x\`
 
 ### macOS Issues
 
@@ -243,20 +265,16 @@ chmod +x dist/GMB_Scraper
 ```
 
 **Python3 not found:**
-```bash
-# Add to ~/.zshrc or ~/.bash_profile
-export PATH="/usr/local/bin:$PATH"
-export PATH="/opt/homebrew/bin:$PATH"
-```
+1. Add to `~/.zshrc` or `~/.bash_profile`:
+   ```bash
+   export PATH="/usr/local/bin:$PATH"
+   export PATH="/opt/homebrew/bin:$PATH"
+   ```
+2. Restart Terminal
 
 **Gatekeeper Security:**
-- Go to **System Preferences** → **Security & Privacy**
-- Click **"Open Anyway"** for the GMB_Scraper app
-
-**M1/M2 Mac Issues:**
-```bash
-arch -x86_64 python3 -m PyInstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
-```
+1. Go to **System Preferences** → **Security & Privacy**
+2. Click **"Open Anyway"** for the GMB_Scraper app
 
 ### Linux Issues
 
@@ -273,15 +291,6 @@ sudo apt install python3-dev build-essential
 # CentOS/RHEL
 sudo yum groupinstall "Development Tools"
 sudo yum install python3-devel
-
-# Fedora
-sudo dnf groupinstall "Development Tools"
-sudo dnf install python3-devel
-```
-
-**Import Errors:**
-```bash
-pyinstaller --onefile --hidden-import=scrapy --hidden-import=scrapy.selector --hidden-import=pandas --hidden-import=requests --add-data "settings.ini:." --name "GMB_Scraper" main.py
 ```
 
 ## 📁 File Structure
@@ -359,18 +368,15 @@ Stay updated with the latest features:
 ## 🚀 Ready to Start?
 
 ### Windows Users
-1. **Download** this repository
-2. **Double-click** `build.bat` for one-click build
-3. **Or follow** the manual build steps above
+1. **Follow Step 1-5** in Windows section above
+2. **Or double-click** `build.bat` for one-click build
 
 ### macOS Users
-1. **Open Terminal** and follow the macOS instructions
+1. **Follow Step 1-5** in macOS section above
 2. **Use `python3` and `pip3`** commands
-3. **Build your .app** using PyInstaller
 
 ### Linux Users
-1. **Open Terminal** and follow the Linux instructions
+1. **Follow Step 1-5** in Linux section above
 2. **Use `python3` and `pip3`** commands
-3. **Build your binary** using PyInstaller
 
 **Happy Scraping on Your Platform! 🎯**
