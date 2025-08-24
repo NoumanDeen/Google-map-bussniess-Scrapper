@@ -6,21 +6,21 @@ Use this to check your current credit usage and remaining credits
 
 import json
 import os
-from credit_tracker import CreditTracker
+from credit_tracker import CorrectedCreditTracker
 
 def main():
     print("💰 CREDIT MONITORING DASHBOARD")
     print("=" * 50)
     
     # Check if credit stats exist
-    if not os.path.exists("credit_stats.json"):
+    if not os.path.exists("corrected_credit_stats.json"):
         print("❌ No credit statistics found.")
         print("   Run the scraper first to generate credit tracking data.")
         return
     
     # Load and display current stats
     try:
-        with open("credit_stats.json", "r") as f:
+        with open("corrected_credit_stats.json", "r") as f:
             stats = json.load(f)
         
         print(f"📊 Last Updated: {stats.get('last_updated', 'Unknown')}")
