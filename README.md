@@ -1,4 +1,4 @@
-# 🎯 Google Maps Business Profile Scraper
+# 🎯 Google Map Business Profile Scraper
 
 A professional tool for extracting Google Maps Business (GMB) profiles from mobile home parks across all 50 US states.
 
