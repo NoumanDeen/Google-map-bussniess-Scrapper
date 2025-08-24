@@ -17,7 +17,7 @@ import json
 import random
 import pandas as pd
 from counties_data import counties_data
-from credit_tracker import CreditTracker
+from credit_tracker import CorrectedCreditTracker
 from datetime import datetime
 from Utils import proxy_user, proxy_pass, AUTOSAVE_EVERY_COUNTIES, SHUFFLE_COUNTIES, RESUME
 
@@ -180,13 +180,76 @@ def get_county_selection(counties):
         except ValueError:
             print("[ERROR] Invalid input. Please try again.")
 
+def check_packetstream_before_scraping():
+    """Check PacketStream proxy status before starting scraping"""
+    print("\n🌐 CHECKING PACKETSTREAM PROXY STATUS")
+    print("=" * 50)
+    
+    if not proxy_user or not proxy_pass:
+        print("❌ PacketStream credentials not found!")
+        print("   Please check your Utils.py file")
+        return False
+    
+    try:
+        print(f"🔍 Testing proxy for user: {proxy_user}")
+        
+        # Test proxy connection
+        test_url = "http://httpbin.org/ip"
+        proxy_url = f"http://{proxy_user}:{proxy_pass}@proxy.packetstream.io:31112"
+        
+        proxies = {
+            "http": proxy_url,
+            "https": proxy_url
+        }
+        
+        print("🌐 Testing proxy connection...")
+        response = requests.get(test_url, proxies=proxies, timeout=15)
+        
+        if response.status_code == 200:
+            data = response.json()
+            print("✅ SUCCESS! PacketStream proxy is working")
+            print(f"   Your proxy IP: {data.get('origin', 'Unknown')}")
+            print("💡 Proxy has credits available - ready to scrape!")
+            return True
+        else:
+            print(f"❌ Proxy test failed: {response.status_code}")
+            print("💡 Check your PacketStream account or credentials")
+            return False
+            
+    except requests.exceptions.Timeout:
+        print("⏰ Request timed out - proxy may be slow")
+        print(" Try again or check your connection")
+        return False
+    except requests.exceptions.ConnectionError:
+        print(" Connection error - check your internet connection")
+        return False
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
+
 def main():
     # Print stylish welcome banner
     print_welcome_banner()
     
+    # 🔧 ADD THIS CHECK HERE
+    print("\n🔍 PRE-FLIGHT CHECKS")
+    print("=" * 50)
+    
+    # Check PacketStream proxy
+    proxy_ok = check_packetstream_before_scraping()
+    if not proxy_ok:
+        print("\n❌ PACKETSTREAM CHECK FAILED!")
+        print("   Please fix your proxy settings before continuing.")
+        print("   Check your Utils.py file and PacketStream account.")
+        input("\nPress Enter to exit...")
+        return
+    
+    print("✅ All pre-flight checks passed!")
+    print("=" * 50)
+    
     # Initialize credit tracker with PacketStream credentials
     api_key = "AIzaSyDD8LALkNo36hN295bcI3Wim-LUvlm5G3s"  # From Utils.py
-    credit_tracker = CreditTracker(
+    credit_tracker = CorrectedCreditTracker(
         api_key=api_key,
         proxy_user=proxy_user,  # PacketStream username
         proxy_pass=proxy_pass   # PacketStream password
@@ -267,24 +330,25 @@ def main():
         try:
             # Create scraper for each county
             out_name = f"{filenm_base} - {county['name']}_{selected_state}"
-            s = Scraper(search_term, "", county['lat'], county['lon'])
+            s = Scraper(search_term, "", county['lat'], county['lon'], credit_tracker)
             county_data = s.start_and_return_data()
 
             # Track credits used for this query/county
             # Each business address lookup uses 1 geocoding API call
             businesses_found = len(county_data)
             
-            # Track credits for EACH business found (not just once per county)
-            for _ in range(businesses_found):
-                credit_tracker.track_query(
-                    query=base_search,
-                    state=selected_state,
-                    county=county['name'],
-                    results_count=1  # Each business = 1 API call
-                )
+            # Track query statistics (no costs, just usage)
+            credit_tracker.track_query(
+                query=base_search,
+                state=selected_state,
+                county=county['name'],
+                businesses_found=businesses_found
+            )
             
             print(f"[SUCCESS] Completed {county['name']} - {businesses_found} businesses found")
-            print(f"[CREDITS] Credits used for this county: ${businesses_found * 0.005:.3f}")
+            print(f"[USAGE] Businesses found: {businesses_found}")
+            print(f"[PACKETSTREAM] Cost so far: ${credit_tracker.packetstream_cost:.2f}")
+            print(f"[GOOGLE API] Requests: {credit_tracker.google_api_requests_made}")
 
             # Add county information to each business record
             for business in county_data:
