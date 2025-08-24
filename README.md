@@ -11,11 +11,11 @@ A professional tool for extracting Google Maps Business (GMB) profiles from mobi
 - 💳 Credit tracking system
 - 🔒 Proxy support
 
-## �� Quick Start
+## 🚀 Quick Start
 
 ---
 
-## �� WINDOWS GUIDE
+## 🎯 WINDOWS GUIDE
 
 ### Option 1: Run with Python (Windows)
 
@@ -38,11 +38,11 @@ A professional tool for extracting Google Maps Business (GMB) profiles from mobi
 2. Navigate to your desired folder: `cd C:\Users\YourName\Desktop`
 3. Clone the repository:
    ```cmd
-   git clone https://github.com/NoumanDeen/Google-map-bussniess.git
+   git clone https://github.com/NoumanDeen/Google-map-bussniess-Scrapper.git
    ```
 4. Enter the folder:
    ```cmd
-   cd Google-map-bussniess
+   cd Google-map-bussniess-Scrapper
    ```
 
 **Step 4: Install Dependencies**
@@ -112,11 +112,11 @@ pyinstaller --onefile --hidden-import=scrapy --hidden-import=scrapy.selector --h
 2. Navigate to your desired folder: `cd ~/Desktop`
 3. Clone the repository:
    ```bash
-   git clone https://github.com/NoumanDeen/Google-map-bussniess.git
+   git clone https://github.com/NoumanDeen/Google-map-bussniess-Scrapper.git
    ```
 4. Enter the folder:
    ```bash
-   cd Google-map-bussniess
+   cd Google-map-bussniess-Scrapper
    ```
 
 **Step 4: Install Dependencies**
@@ -209,11 +209,11 @@ sudo dnf install python3 python3-pip git
 1. Navigate to your desired folder: `cd ~/Desktop`
 2. Clone the repository:
    ```bash
-   git clone https://github.com/NoumanDeen/Google-map-bussniess.git
+   git clone https://github.com/NoumanDeen/Google-map-bussniess-Scrapper.git
    ```
 3. Enter the folder:
    ```bash
-   cd Google-map-bussniess
+   cd Google-map-bussniess-Scrapper
    ```
 
 **Step 4: Install Dependencies**
