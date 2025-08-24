@@ -11,11 +11,13 @@ A professional tool for extracting Google Maps Business (GMB) profiles from mobi
 - 💳 Credit tracking system
 - 🔒 Proxy support
 
-## 🚀 Quick Start
+## �� Quick Start
 
-### Option 1: Run with Python (All Platforms)
+---
 
-#### Windows Step-by-Step
+## �� WINDOWS GUIDE
+
+### Option 1: Run with Python (Windows)
 
 **Step 1: Install Python**
 1. Go to [python.org](https://python.org)
@@ -53,7 +55,44 @@ pip install -r requirements.txt
 python main.py
 ```
 
-#### macOS Step-by-Step
+### Option 2: Build Windows Executable (.exe)
+
+**Step 1: Install PyInstaller**
+1. Open Command Prompt in the project folder
+2. Install PyInstaller:
+   ```cmd
+   pip install pyinstaller
+   ```
+
+**Step 2: Build Executable**
+```cmd
+pyinstaller --onefile --add-data "settings.ini;." --console --name "GMB_Scraper" main.py
+```
+
+**Step 3: Find Your Executable**
+1. Look in the `dist` folder
+2. You'll find `GMB_Scraper.exe`
+3. Double-click to run
+
+**🎯 One-Click Build (Windows):**
+Simply double-click `build.bat` and wait for completion!
+
+### Windows Troubleshooting
+
+**Python not found:**
+1. Reinstall Python and check "Add to PATH"
+2. Or manually add: `C:\Users\YourUser\AppData\Local\Programs\Python\Python3x\`
+
+**Import Errors:**
+```cmd
+pyinstaller --onefile --hidden-import=scrapy --hidden-import=scrapy.selector --hidden-import=pandas --hidden-import=requests --add-data "settings.ini;." --name "GMB_Scraper" main.py
+```
+
+---
+
+## 🍎 macOS GUIDE
+
+### Option 1: Run with Python (macOS)
 
 **Step 1: Install Python**
 1. Go to [python.org](https://python.org)
@@ -90,9 +129,56 @@ pip3 install -r requirements.txt
 python3 main.py
 ```
 
-#### Linux (Ubuntu/Debian) Step-by-Step
+### Option 2: Build macOS Application (.app)
 
-**Step 1: Install Python**
+**Step 1: Install PyInstaller**
+1. Open Terminal in the project folder
+2. Install PyInstaller:
+   ```bash
+   pip3 install pyinstaller
+   ```
+
+**Step 2: Build Application**
+```bash
+python3 -m PyInstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
+```
+
+**Step 3: Find Your Application**
+1. Look in the `dist` folder
+2. You'll find `GMB_Scraper.app`
+3. Double-click to run
+
+**Alternative - Single Executable:**
+```bash
+python3 -m PyInstaller --onefile --add-data "settings.ini:." --name "GMB_Scraper" main.py
+```
+
+### macOS Troubleshooting
+
+**Permission Denied:**
+```bash
+chmod +x dist/GMB_Scraper
+```
+
+**Python3 not found:**
+1. Add to `~/.zshrc` or `~/.bash_profile`:
+   ```bash
+   export PATH="/usr/local/bin:$PATH"
+   export PATH="/opt/homebrew/bin:$PATH"
+   ```
+2. Restart Terminal
+
+**Gatekeeper Security:**
+1. Go to **System Preferences** → **Security & Privacy**
+2. Click **"Open Anyway"** for the GMB_Scraper app
+
+---
+
+## 🐧 LINUX GUIDE
+
+### Option 1: Run with Python (Linux)
+
+**Step 1: Install Python (Ubuntu/Debian)**
 1. Open Terminal
 2. Update package list:
    ```bash
@@ -102,6 +188,16 @@ python3 main.py
    ```bash
    sudo apt install python3 python3-pip git
    ```
+
+**Step 1: Install Python (CentOS/RHEL)**
+```bash
+sudo yum install python3 python3-pip git
+```
+
+**Step 1: Install Python (Fedora)**
+```bash
+sudo dnf install python3 python3-pip git
+```
 
 **Step 2: Verify Installation**
 1. Type: `python3 --version`
@@ -130,55 +226,7 @@ pip3 install -r requirements.txt
 python3 main.py
 ```
 
-### Option 2: Build Executable
-
-#### Windows (.exe) Step-by-Step
-
-**Step 1: Install PyInstaller**
-1. Open Command Prompt in the project folder
-2. Install PyInstaller:
-   ```cmd
-   pip install pyinstaller
-   ```
-
-**Step 2: Build Executable**
-```cmd
-pyinstaller --onefile --add-data "settings.ini;." --console --name "GMB_Scraper" main.py
-```
-
-**Step 3: Find Your Executable**
-1. Look in the `dist` folder
-2. You'll find `GMB_Scraper.exe`
-3. Double-click to run
-
-**🎯 One-Click Build (Windows):**
-Simply double-click `build.bat` and wait for completion!
-
-#### macOS (.app) Step-by-Step
-
-**Step 1: Install PyInstaller**
-1. Open Terminal in the project folder
-2. Install PyInstaller:
-   ```bash
-   pip3 install pyinstaller
-   ```
-
-**Step 2: Build Application**
-```bash
-python3 -m PyInstaller --windowed --add-data "settings.ini:." --name "GMB_Scraper" main.py
-```
-
-**Step 3: Find Your Application**
-1. Look in the `dist` folder
-2. You'll find `GMB_Scraper.app`
-3. Double-click to run
-
-**Alternative - Single Executable:**
-```bash
-python3 -m PyInstaller --onefile --add-data "settings.ini:." --name "GMB_Scraper" main.py
-```
-
-#### Linux (Binary) Step-by-Step
+### Option 2: Build Linux Binary
 
 **Step 1: Install PyInstaller**
 1. Open Terminal in the project folder
@@ -201,6 +249,25 @@ chmod +x dist/GMB_Scraper
 ```bash
 ./dist/GMB_Scraper
 ```
+
+### Linux Troubleshooting
+
+**Permission Denied:**
+```bash
+chmod +x dist/GMB_Scraper
+```
+
+**Missing Dependencies:**
+```bash
+# Ubuntu/Debian
+sudo apt install python3-dev build-essential
+
+# CentOS/RHEL
+sudo yum groupinstall "Development Tools"
+sudo yum install python3-devel
+```
+
+---
 
 ## 🖥️ GUI Builder (All Platforms)
 
@@ -244,54 +311,7 @@ chmod +x dist/GMB_Scraper
 - **Additional Files**: Add `settings.ini`
 - **Click "Convert"**
 
-## 🔧 Platform-Specific Troubleshooting
-
-### Windows Issues
-
-**Python not found:**
-1. Reinstall Python and check "Add to PATH"
-2. Or manually add: `C:\Users\YourUser\AppData\Local\Programs\Python\Python3x\`
-
-**Import Errors:**
-```cmd
-pyinstaller --onefile --hidden-import=scrapy --hidden-import=scrapy.selector --hidden-import=pandas --hidden-import=requests --add-data "settings.ini;." --name "GMB_Scraper" main.py
-```
-
-### macOS Issues
-
-**Permission Denied:**
-```bash
-chmod +x dist/GMB_Scraper
-```
-
-**Python3 not found:**
-1. Add to `~/.zshrc` or `~/.bash_profile`:
-   ```bash
-   export PATH="/usr/local/bin:$PATH"
-   export PATH="/opt/homebrew/bin:$PATH"
-   ```
-2. Restart Terminal
-
-**Gatekeeper Security:**
-1. Go to **System Preferences** → **Security & Privacy**
-2. Click **"Open Anyway"** for the GMB_Scraper app
-
-### Linux Issues
-
-**Permission Denied:**
-```bash
-chmod +x dist/GMB_Scraper
-```
-
-**Missing Dependencies:**
-```bash
-# Ubuntu/Debian
-sudo apt install python3-dev build-essential
-
-# CentOS/RHEL
-sudo yum groupinstall "Development Tools"
-sudo yum install python3-devel
-```
+---
 
 ## 📁 File Structure
 
@@ -367,16 +387,6 @@ Stay updated with the latest features:
 
 ## 🚀 Ready to Start?
 
-### Windows Users
-1. **Follow Step 1-5** in Windows section above
-2. **Or double-click** `build.bat` for one-click build
+**Choose your platform above and follow the step-by-step guide!**
 
-### macOS Users
-1. **Follow Step 1-5** in macOS section above
-2. **Use `python3` and `pip3`** commands
-
-### Linux Users
-1. **Follow Step 1-5** in Linux section above
-2. **Use `python3` and `pip3`** commands
-
-**Happy Scraping on Your Platform! 🎯**
+**Happy Scraping! 🎯**
